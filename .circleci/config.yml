@@ -44,7 +44,7 @@ jobs:
           adb shell input keyevent 82
     - run:
         name: Run EspressoTests
-        command: ./gradlew myTaxiTest
+        command: ./gradlew connectedAndroidTest
     - store_artifacts: # for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
         path: app/build/reports
         destination: reports
