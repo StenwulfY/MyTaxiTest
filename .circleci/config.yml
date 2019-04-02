@@ -2,89 +2,34 @@
 #
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
-version: 2.1
-executors:
-  android-executor:
-    docker:
-    - image: circleci/android:api-28-alpha
-    working_directory: ~/code
-    environment:
-      JVM_OPTS: -Xmx3200m
-
+version: 2
 jobs:
   build:
-    executor: android-executor
-    steps:
-    - checkout
-    - restore_cache:
-        keys:  # use increasingly general patterns to restore gradle cache
-        - gradle-repo-v1-{{ checksum "AndroidDemo/build.gradle" }}-{{ checksum  "AndroidDemo/app/build.gradle" }}
-        - gradle-repo-v1-{{ checksum "AndroidDemo/build.gradle" }}-
-        - gradle-repo-v1-
-    - run:
-        name: Build both the application and the AndroidTest APKs, run lint
-        working_directory: AndroidDemo
-        command: |
-          ./gradlew :app:assembleDebug
-          ./gradlew lint
-          ./gradlew :app:assembleDebugAndroidTest
-    - save_cache:
-        key: gradle-repo-v1-{{ checksum "AndroidDemo/build.gradle" }}-{{ checksum  "AndroidDemo/app/build.gradle" }}
-        paths:
-        - ~/.gradle
-    - persist_to_workspace:
-        root: AndroidDemo/app/build/outputs/apk
-        paths:
-        - debug/app-debug.apk
-        - androidTest/debug/app-debug-androidTest.apk
-    - run:
-        name: Run unit tests
-        working_directory: AndroidDemo
-        command: ./gradlew test
-    - store_artifacts:
-        path: AndroidDemo/app/build/reports
-        destination: reports
-    - store_test_results:
-        path: AndroidDemo/app/build/test-results
-  test:
-    executor: android-executor
-    steps:
-    - attach_workspace:
-        at: AndroidDemo/app/build/outputs/apk
-    - run:
-        name: Store Google Service Account
-        command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
-    - run:
-        name: Authorize gcloud and set config defaults
-        command: |
-          sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-          sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
-    - run:
-        name: Test with Firebase Test Lab
-        command: |
-          sudo gcloud firebase test android run \
-            --app AndroidDemo/app/build/outputs/apk/debug/app-debug.apk \
-            --test AndroidDemo/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-            --device model=Nexus6P,version=26,locale=es,orientation=portrait  \
-            --device model=walleye,version=28,locale=en,orientation=landscape |& \
-            tee fire.log
-    - run:
-        name: Install gsutil dependency and copy test results data
-        command: |
-          sudo pip install -U crcmod
-          mkdir results
-          sudo gsutil -m cp -r -U gs://`egrep -o 'test-lab-[^]]+' fire.log` results | true
-        when: always
-    - store_artifacts:
-        path: results
-        destination: results
-    - store_test_results:
-        path: results
-workflows:
-  version: 2
-  build_and_test:
-    jobs:
-    - build
-    - test:
-        requires:
-  - build
+working_directory: ~/code
+docker:
+- image: circleci/android:api-25-alpha
+environment:
+  JVM_OPTS: -Xmx3200m
+steps:
+- checkout
+- restore_cache:
+    key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+- run:
+    name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
+    command: sudo chmod +x ./gradlew
+- run:
+    name: Download Dependencies
+    command: ./gradlew androidDependencies
+- save_cache:
+    paths:
+    - ~/.gradle
+    key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+- run:
+    name: Run Tests
+    command: ./gradlew lint test
+- store_artifacts:
+    path: app/build/reports
+    destination: reports
+- store_test_results:
+    path: app/build/test-results
+
