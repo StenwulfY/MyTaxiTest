@@ -34,6 +34,23 @@ jobs:
           sleep 30
           adb shell input keyevent 82
     - run:
+        name: Run Android Connected Tests
+        command: |
+          export ADB_INSTALL_TIMEOUT=120
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          # ./scripts/test.sh
+          ./gradlew assembleDebug
+          # Wait for emulator to fully boot
+          # TODO: Need to create a good check
+          sleep 60
+          # Is the emulator still running?
+          adb devices
+          # Check if package manager is running
+          adb shell pm list packages
+          # Install package
+          $ANDROID_SDK_ROOT/platform-tools/adb install /home/android/androidlearn/app/build/outputs/apk/app-debug.apk
+          ./gradlew connectedAndroidTest
+    - run:
         name: Run EspressoTests
         command: ./gradlew connectedAndroidTest -PdisablePreDex
     - store_artifacts:
