@@ -21,32 +21,32 @@ jobs:
     - run:
         name: Store Google Service Account
         command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
-        - run:
-            name: Authorize gcloud and set config defaults
-            command: |
-              sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-              sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
-        - run:
-            name: Test with Firebase Test Lab
-            command: |
-              sudo gcloud firebase test android run \
-                --app AndroidDemo/app/build/outputs/apk/debug/app-debug.apk \
-                --test AndroidDemo/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-                --device model=Nexus6P,version=26,locale=es,orientation=portrait  \
-                --device model=walleye,version=28,locale=en,orientation=landscape |& \
-                tee fire.log
-        - run:
-            name: Install gsutil dependency and copy test results data
-            command: |
-              sudo pip install -U crcmod
-              mkdir results
-              sudo gsutil -m cp -r -U gs://`egrep -o 'test-lab-[^]]+' fire.log` results | true
-            when: always
-        - store_artifacts:
-            path: results
-            destination: results
-        - store_test_results:
-            path: results
+    - run:
+        name: Authorize gcloud and set config defaults
+        command: |
+          sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+          sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+    - run:
+        name: Test with Firebase Test Lab
+        command: |
+          sudo gcloud firebase test android run \
+            --app AndroidDemo/app/build/outputs/apk/debug/app-debug.apk \
+            --test AndroidDemo/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+            --device model=Nexus6P,version=26,locale=es,orientation=portrait  \
+            --device model=walleye,version=28,locale=en,orientation=landscape |& \
+            tee fire.log
+    - run:
+       name: Install gsutil dependency and copy test results data
+       command: |
+          sudo pip install -U crcmod
+          mkdir results
+          sudo gsutil -m cp -r -U gs://`egrep -o 'test-lab-[^]]+' fire.log` results | true
+          when: always
+    - store_artifacts:
+       path: results
+       destination: results
+    - store_test_results:
+       path: results
 #    - run:
 #        name: Setup emulator
 #        command: sdkmanager "system-images;android-16;default;armeabi-v7a" && echo "no" | avdmanager create avd -n test -k "system-images;android-16;default;armeabi-v7a"
