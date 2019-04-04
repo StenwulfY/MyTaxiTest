@@ -35,8 +35,9 @@ jobs:
         name: Test with Firebase Test Lab
         command: |
           sudo gcloud firebase test android run \
-            --app app-debug.apk \
-            --test app-debug-androidTest.apk \
+            --type instrumentation \
+            --app app/build/outputs/apk/debug/app-debug.apk \
+            --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
             --device model=Nexus6,version=21,locale=en,orientation=portrait  \
     - run:
        name: Install gsutil dependency and copy test results data
