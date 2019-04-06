@@ -19,10 +19,6 @@ jobs:
         - ~/.gradle
         key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
     - run:
-        name: Store Google Service Account
-        command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
-
-    - run:
         name: Build debug APK and release APK
         command: |
           ./gradlew :app:assembleDebug
@@ -30,6 +26,9 @@ jobs:
     - store_artifacts:
         path: app/build/outputs/apk/
         destination: /apk/
+    - run:
+        name: Store Google Service Account
+        command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
     - run:
         name: Authorize gcloud and set config defaults
         command: |
@@ -47,7 +46,7 @@ jobs:
             --type instrumentation \
             --app app/build/outputs/apk/debug/app-debug.apk \
             --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-#            --device model=Nexus6,version=21,locale=en,orientation=portrait  \
+            --device model=Nexus6p,version=27,locale=en,orientation=portrait  \
 #    - run:
 #       name: Install gsutil dependency and copy test results data
 #       command: |
@@ -58,8 +57,10 @@ jobs:
     - store_artifacts:
        path: results
        destination: results
+#    - store_test_results:
+#       path: results
     - store_test_results:
-       path: results
+       path: app/build/test-results
 
 #    - run:
 #        name: Setup emulator
