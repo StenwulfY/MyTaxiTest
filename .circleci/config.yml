@@ -41,17 +41,8 @@ jobs:
             --type instrumentation \
             --app app/build/outputs/apk/debug/app-debug.apk \
             --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-    - run:
-        name: Create directory to store test results
-        command: mkdir firebase
-    - run:
-        name: Download instrumented test results from Firebase Test Lab
-        command: gsutil -m cp -r -U "`gsutil ls gs://test-lab-hrv8ssyi4d4bz-hdbrndt76jzuw | tail -1`*" /root/workspace/firebase/
     - store_artifacts:
-        path: firebase/
-        destination: /firebase/
-#    - store_artifacts:
-#       path: results
-#       destination: results
+       path: results
+       destination: results
     - store_test_results:
        path: app/build/test-results
